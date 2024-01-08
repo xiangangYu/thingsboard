@@ -26,10 +26,24 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+/**
+ * 遥测订阅更新
+ */
 public class TelemetrySubscriptionUpdate {
 
+    /**
+     * 订阅ID
+     */
     private final int subscriptionId;
+
+    /**
+     * 错误码
+     */
     private int errorCode;
+
+    /**
+     * 错误消息
+     */
     private String errorMsg;
     private Map<String, List<Object>> data;
 

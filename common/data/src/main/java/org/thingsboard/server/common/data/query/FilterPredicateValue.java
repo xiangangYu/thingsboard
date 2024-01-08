@@ -25,15 +25,30 @@ import org.thingsboard.server.common.data.validation.NoXss;
 import javax.validation.Valid;
 import java.io.Serializable;
 
+/**
+ * 过滤器断言值
+ * @param <T>
+ */
 @Data
 public class FilterPredicateValue<T> implements Serializable {
 
+    /**
+     * 默认值
+     */
     @Getter
     @NoXss
     private final T defaultValue;
+
+    /**
+     * 用户值
+     */
     @Getter
     @NoXss
     private final T userValue;
+
+    /**
+     * 动态值
+     */
     @Getter
     @Valid
     private final DynamicValue<T> dynamicValue;

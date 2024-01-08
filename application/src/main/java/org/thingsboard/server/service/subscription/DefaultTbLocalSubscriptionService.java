@@ -191,6 +191,11 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         callback.onSuccess();
     }
 
+    /**
+     * 取消指定会话的指定指令ID的订阅
+     * @param sessionId 会话ID
+     * @param subscriptionId 订阅ID
+     */
     @Override
     public void cancelSubscription(String sessionId, int subscriptionId) {
         log.debug("[{}][{}] Going to remove subscription.", sessionId, subscriptionId);

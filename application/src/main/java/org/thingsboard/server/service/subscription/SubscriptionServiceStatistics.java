@@ -20,12 +20,39 @@ import lombok.Data;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * 订阅服务统计
+ */
 @Data
 public class SubscriptionServiceStatistics {
+
+    /**
+     * 告警查询调用数
+     */
     private AtomicInteger alarmQueryInvocationCnt = new AtomicInteger();
+
+    /**
+     * 通用查询调用数
+     */
     private AtomicInteger regularQueryInvocationCnt = new AtomicInteger();
+
+    /**
+     * 动态查询调用数
+     */
     private AtomicInteger dynamicQueryInvocationCnt = new AtomicInteger();
+
+    /**
+     * 告警查询时间花费
+     */
     private AtomicLong alarmQueryTimeSpent = new AtomicLong();
+
+    /**
+     * 通用查询时间花费
+     */
     private AtomicLong regularQueryTimeSpent = new AtomicLong();
+
+    /**
+     * 动态查询时间花费
+     */
     private AtomicLong dynamicQueryTimeSpent = new AtomicLong();
 }

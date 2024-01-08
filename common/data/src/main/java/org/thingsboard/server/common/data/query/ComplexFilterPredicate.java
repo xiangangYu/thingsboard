@@ -19,6 +19,9 @@ import lombok.Data;
 
 import java.util.List;
 
+/**
+ * 复杂过滤器断言
+ */
 @Data
 public class ComplexFilterPredicate implements KeyFilterPredicate {
 
@@ -30,8 +33,18 @@ public class ComplexFilterPredicate implements KeyFilterPredicate {
         return FilterPredicateType.COMPLEX;
     }
 
+    /**
+     * 复杂操作
+     */
     public enum ComplexOperation {
+        /**
+         * 与操作
+         */
         AND,
+
+        /**
+         * 或操作
+         */
         OR
     }
 }

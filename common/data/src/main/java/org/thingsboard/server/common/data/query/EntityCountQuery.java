@@ -22,13 +22,22 @@ import lombok.ToString;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * 实体数量查询
+ */
 @ApiModel
 @ToString
 public class EntityCountQuery {
 
+    /**
+     * 实体过滤器
+     */
     @Getter
     private EntityFilter entityFilter;
 
+    /**
+     * key过滤器列表
+     */
     @Getter
     protected List<KeyFilter> keyFilters;
 

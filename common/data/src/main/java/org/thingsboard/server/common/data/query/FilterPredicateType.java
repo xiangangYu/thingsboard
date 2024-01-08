@@ -15,9 +15,27 @@
  */
 package org.thingsboard.server.common.data.query;
 
+/**
+ * 过滤器断言类型
+ */
 public enum FilterPredicateType {
+    /**
+     * 字符串
+     */
     STRING,
+
+    /**
+     * 数组
+     */
     NUMERIC,
+
+    /**
+     * 布尔
+     */
     BOOLEAN,
+
+    /**
+     * 复杂计算
+     */
     COMPLEX
 }

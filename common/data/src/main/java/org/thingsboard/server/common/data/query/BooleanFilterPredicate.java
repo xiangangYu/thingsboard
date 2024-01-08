@@ -17,6 +17,9 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
+/**
+ * 布尔过滤器断言
+ */
 @Data
 public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean> {
 
@@ -28,8 +31,18 @@ public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean>
         return FilterPredicateType.BOOLEAN;
     }
 
+    /**
+     * 布尔操作枚举
+     */
     public enum BooleanOperation {
+        /**
+         * 等于
+         */
         EQUAL,
+
+        /**
+         * 不等于
+         */
         NOT_EQUAL
     }
 }

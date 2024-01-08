@@ -166,8 +166,14 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
+    /**
+     * 处理实体数据指令的websocket会话任务
+     * @param session 会话
+     * @param cmd 指定
+     */
     @Override
     public void handleCmd(WebSocketSessionRef session, EntityDataCmd cmd) {
+        // 获取订阅的上下文，实体数据订阅上下文
         TbEntityDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
@@ -489,6 +495,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
+    /**
+     * 创建新的实体数据订阅上下文并保存到对应的会话中，返回新建的实体数据订阅上下文
+     * @param sessionRef 会话
+     * @param cmd 指令
+     * @return 新建的实体数据订阅上下文
+     */
     private TbEntityDataSubCtx createSubCtx(WebSocketSessionRef sessionRef, EntityDataCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
         TbEntityDataSubCtx ctx = new TbEntityDataSubCtx(serviceId, wsService, entityService, localSubscriptionService,
@@ -533,8 +545,16 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         return ctx;
     }
 
+    /**
+     * 获取订阅的上下文
+     * @param sessionId 会话ID
+     * @param cmdId 指令ID
+     * @return
+     * @param <T>
+     */
     @SuppressWarnings("unchecked")
     private <T extends TbAbstractSubCtx> T getSubCtx(String sessionId, int cmdId) {
+        // subscriptionsBySessionId通过会话ID订阅的上下文
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.get(sessionId);
         if (sessionSubs != null) {
             return (T) sessionSubs.get(cmdId);

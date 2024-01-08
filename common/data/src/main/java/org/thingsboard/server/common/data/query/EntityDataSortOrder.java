@@ -17,10 +17,20 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
+/**
+ * 实体数据查询排序实体
+ */
 @Data
 public class EntityDataSortOrder {
 
+    /**
+     * 实体的KEY
+     */
     private EntityKey key;
+
+    /**
+     * 排序方向：ASC升序，DESC降序
+     */
     private Direction direction;
 
     public EntityDataSortOrder() {}

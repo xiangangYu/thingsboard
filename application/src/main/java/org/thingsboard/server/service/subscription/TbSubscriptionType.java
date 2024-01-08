@@ -15,6 +15,32 @@
  */
 package org.thingsboard.server.service.subscription;
 
+/**
+ * Tb订阅枚举类型
+ */
 public enum TbSubscriptionType {
-    TIMESERIES, ATTRIBUTES, ALARMS, NOTIFICATIONS, NOTIFICATIONS_COUNT
+    /**
+     * 时序
+     */
+    TIMESERIES,
+
+    /**
+     * 属性
+     */
+    ATTRIBUTES,
+
+    /**
+     * 告警
+     */
+    ALARMS,
+
+    /**
+     * 通知
+     */
+    NOTIFICATIONS,
+
+    /**
+     * 通知数
+     */
+    NOTIFICATIONS_COUNT
 }

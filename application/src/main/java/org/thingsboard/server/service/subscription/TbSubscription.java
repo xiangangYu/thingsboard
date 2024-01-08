@@ -24,18 +24,52 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+/**
+ * Tb订阅
+ * @param <T>
+ */
 @Data
 @AllArgsConstructor
 public abstract class TbSubscription<T> {
 
+    /**
+     * 服务ID
+     */
     private final String serviceId;
+
+    /**
+     * 会话ID
+     */
     private final String sessionId;
+
+    /**
+     * 订阅ID
+     */
     private final int subscriptionId;
+
+    /**
+     * 租户ID
+     */
     private final TenantId tenantId;
+
+    /**
+     * 实体ID
+     */
     private final EntityId entityId;
+
+    /**
+     * Tb订阅类型
+     */
     private final TbSubscriptionType type;
+
+    /**
+     * 更新处理器
+     */
     private final BiConsumer<TbSubscription<T>, T> updateProcessor;
 
+    /**
+     * 序列
+     */
     protected final AtomicInteger sequence = new AtomicInteger();
 
     @Override

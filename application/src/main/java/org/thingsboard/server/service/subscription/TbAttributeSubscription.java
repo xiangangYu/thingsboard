@@ -24,6 +24,9 @@ import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpda
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+/**
+ * 属性订阅
+ */
 public class TbAttributeSubscription extends TbSubscription<TelemetrySubscriptionUpdate> {
 
     @Getter private final long queryTs;

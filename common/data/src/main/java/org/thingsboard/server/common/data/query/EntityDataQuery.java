@@ -20,6 +20,9 @@ import lombok.ToString;
 
 import java.util.List;
 
+/**
+ * 实体数据查询对象，下面的@ToString(callSupper=true)表示在toString时调用父类的ToString方法
+ */
 @ToString(callSuper = true)
 public class EntityDataQuery extends AbstractDataQuery<EntityDataPageLink> {
 
@@ -36,6 +39,7 @@ public class EntityDataQuery extends AbstractDataQuery<EntityDataPageLink> {
 
     @JsonIgnore
     public EntityDataQuery next() {
+        // 构建下一个分页的查询
         return new EntityDataQuery(getEntityFilter(), getPageLink().nextPageLink(), entityFields, latestValues, keyFilters);
     }
 

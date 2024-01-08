@@ -55,29 +55,88 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * Tb抽象的订阅上下文
+ * @param <T>
+ */
 @Slf4j
 @Data
 public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
 
+    /**
+     * 发送websocket锁
+     */
     @Getter
     protected final Lock wsLock = new ReentrantLock(true);
+
+    /**
+     * 服务ID
+     */
     protected final String serviceId;
+
+    /**
+     * 订阅服务统计
+     */
     protected final SubscriptionServiceStatistics stats;
+
+    /**
+     * websocket服务
+     */
     private final WebSocketService wsService;
+
+    /**
+     * 实体服务
+     */
     protected final EntityService entityService;
+
+    /**
+     * 本地订阅服务
+     */
     protected final TbLocalSubscriptionService localSubscriptionService;
+
+    /**
+     * 服务服务
+     */
     protected final AttributesService attributesService;
+
+    /**
+     * websocket会话实体
+     */
     protected final WebSocketSessionRef sessionRef;
+
+    /**
+     * 指令ID编号
+     */
     protected final int cmdId;
+
+    /**
+     * 订阅到动态值的Key集合
+     */
     protected final Set<Integer> subToDynamicValueKeySet;
+
+    /**
+     * 动态值Map
+     */
     @Getter
     protected final Map<DynamicValueKey, List<DynamicValue>> dynamicValues;
     @Getter
     @Setter
     protected T query;
+
+    /**
+     * 可调度的future
+     */
     @Setter
     protected volatile ScheduledFuture<?> refreshTask;
+
+    /**
+     * 任务已经停止
+     */
     protected volatile boolean stopped;
+
+    /**
+     * 创建时间
+     */
     @Getter
     protected long createdTime;
 
@@ -98,6 +157,10 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         this.dynamicValues = new ConcurrentHashMap<>();
     }
 
+    /**
+     * 设置并解析查询
+     * @param query
+     */
     public void setAndResolveQuery(T query) {
         dynamicValues.clear();
         this.query = query;
@@ -109,6 +172,12 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         resolve(getTenantId(), getCustomerId(), getUserId());
     }
 
+    /**
+     * 解析查询
+     * @param tenantId 租户ID
+     * @param customerId 客户ID
+     * @param userId 用户ID
+     */
     public void resolve(TenantId tenantId, CustomerId customerId, UserId userId) {
         List<ListenableFuture<DynamicValueKeySub>> futures = new ArrayList<>();
         for (DynamicValueKey key : dynamicValues.keySet()) {
@@ -130,6 +199,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         }
         try {
             Map<EntityId, Map<String, DynamicValueKeySub>> tmpSubMap = new HashMap<>();
+            // 多个future获取值
             for (DynamicValueKeySub sub : Futures.successfulAsList(futures).get()) {
                 tmpSubMap.computeIfAbsent(sub.getEntityId(), tmp -> new HashMap<>()).put(sub.getKey().getSourceAttribute(), sub);
             }
@@ -159,6 +229,12 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
 
     }
 
+    /**
+     * 动态值订阅更新
+     * @param sessionId 会话ID
+     * @param subscriptionUpdate 遥测订阅更新
+     * @param dynamicValueKeySubMap 动态值key订阅map
+     */
     private void dynamicValueSubUpdate(String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate,
                                        Map<String, DynamicValueKeySub> dynamicValueKeySubMap) {
         Map<String, TsValue> latestUpdate = new HashMap<>();
@@ -183,29 +259,70 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         }
     }
 
+    /**
+     * 抽象方法，是否时动态的
+     * @return
+     */
     public abstract boolean isDynamic();
 
+    /**
+     * 抽象方法，获取数据
+     */
     public abstract void fetchData();
 
+    /**
+     * 抽象方法，更新
+     */
     protected abstract void update();
 
+    /**
+     * 清除订阅
+     */
     public void clearSubscriptions() {
         clearDynamicValueSubscriptions();
     }
 
+    /**
+     * 停止任务
+     */
     public void stop() {
         stopped = true;
+        // 取消任务
         cancelTasks();
+        // 清除订阅
         clearSubscriptions();
     }
 
+    /**
+     * 动态值key订阅
+     */
     @Data
     private static class DynamicValueKeySub {
+        /**
+         * 动态值key
+         */
         private final DynamicValueKey key;
+
+        /**
+         * 实体ID
+         */
         private final EntityId entityId;
+
+        /**
+         * 上次更新时间
+         */
         private long lastUpdateTs;
+
+        /**
+         * 上次更新值
+         */
         private String lastUpdateValue;
 
+        /**
+         * 更新值
+         * @param value
+         * @return
+         */
         boolean updateValue(TsValue value) {
             if (value.getTs() > lastUpdateTs && (lastUpdateValue == null || !lastUpdateValue.equals(value.getValue()))) {
                 this.lastUpdateTs = value.getTs();
@@ -217,7 +334,15 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         }
     }
 
+    /**
+     * 解析实体值
+     * @param tenantId 租户ID
+     * @param entityId 实体ID
+     * @param key 动态值key
+     * @return
+     */
     private ListenableFuture<DynamicValueKeySub> resolveEntityValue(TenantId tenantId, EntityId entityId, DynamicValueKey key) {
+        // 根据条件查询服务端属性
         ListenableFuture<Optional<AttributeKvEntry>> entry = attributesService.find(tenantId, entityId,
                 TbAttributeSubscriptionScope.SERVER_SCOPE.name(), key.getSourceAttribute());
         return Futures.transform(entry, attributeOpt -> {
@@ -232,6 +357,11 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         }, MoreExecutors.directExecutor());
     }
 
+    /**
+     * 更新动态值
+     * @param sub
+     * @param tsValue
+     */
     @SuppressWarnings("unchecked")
     protected void updateDynamicValuesByKey(DynamicValueKeySub sub, TsValue tsValue) {
         DynamicValueKey dvk = sub.getKey();
@@ -254,6 +384,10 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         }
     }
 
+    /**
+     * 注册动态值
+     * @param predicate
+     */
     @SuppressWarnings("unchecked")
     private void registerDynamicValues(KeyFilterPredicate predicate) {
         switch (predicate.getType()) {
@@ -275,6 +409,11 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         }
     }
 
+    /**
+     * 从简单断言获取动态值
+     * @param predicate
+     * @return
+     */
     private Optional<DynamicValue<T>> getDynamicValueFromSimplePredicate(SimpleKeyFilterPredicate<T> predicate) {
         if (predicate.getValue().getUserValue() == null) {
             return Optional.ofNullable(predicate.getValue().getDynamicValue());
@@ -283,22 +422,41 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         }
     }
 
+    /**
+     * 获取会话ID
+     * @return
+     */
     public String getSessionId() {
         return sessionRef.getSessionId();
     }
 
+    /**
+     * 获取租户ID
+     * @return 租户ID
+     */
     public TenantId getTenantId() {
         return sessionRef.getSecurityCtx().getTenantId();
     }
 
+    /**
+     * 获取客户ID
+     * @return 客户ID
+     */
     public CustomerId getCustomerId() {
         return sessionRef.getSecurityCtx().getCustomerId();
     }
 
+    /**
+     * 获取用户ID
+     * @return 用户ID
+     */
     public UserId getUserId() {
         return sessionRef.getSecurityCtx().getId();
     }
 
+    /**
+     * 清除动态值订阅
+     */
     protected void clearDynamicValueSubscriptions() {
         if (subToDynamicValueKeySet != null) {
             for (Integer subId : subToDynamicValueKeySet) {
@@ -309,6 +467,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     }
 
     public void setRefreshTask(ScheduledFuture<?> task) {
+        // 如果任务没有停止，直接赋值。否则如果任务已经停止，把新传进来的任务取消
         if (!stopped) {
             this.refreshTask = task;
         } else {
@@ -316,28 +475,53 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
         }
     }
 
+    /**
+     * 取消任务
+     */
     public void cancelTasks() {
+        // 如果任务不为空，取消任务
         if (this.refreshTask != null) {
             log.trace("[{}][{}] Canceling old refresh task", sessionRef.getSessionId(), cmdId);
             this.refreshTask.cancel(true);
         }
     }
 
+    /**
+     * 动态值Key
+     */
     @Data
     public static class DynamicValueKey {
+        /**
+         * 过滤器断言类型
+         */
         @Getter
         private final FilterPredicateType predicateType;
+
+        /**
+         * 动态值源类型
+         */
         @Getter
         private final DynamicValueSourceType sourceType;
+
+        /**
+         * 源属性
+         */
         @Getter
         private final String sourceAttribute;
     }
 
+    /**
+     * 发送websocket消息
+     * @param update 发送的消息
+     */
     public void sendWsMsg(CmdUpdate update) {
+        // 获取锁
         wsLock.lock();
         try {
+            // 根据指定的会话，发送消息
             wsService.sendUpdate(sessionRef.getSessionId(), update);
         } finally {
+            // 释放锁
             wsLock.unlock();
         }
     }

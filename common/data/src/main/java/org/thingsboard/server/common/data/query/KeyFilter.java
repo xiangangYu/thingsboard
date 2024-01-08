@@ -20,12 +20,26 @@ import lombok.Data;
 
 import java.io.Serializable;
 
+/**
+ * key过滤器
+ */
 @ApiModel
 @Data
 public class KeyFilter implements Serializable {
 
+    /**
+     * 实体key
+     */
     private EntityKey key;
+
+    /**
+     * 实体key的值的类型
+     */
     private EntityKeyValueType valueType;
+
+    /**
+     * key过滤器断言
+     */
     private KeyFilterPredicate predicate;
 
 }

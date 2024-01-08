@@ -15,9 +15,27 @@
  */
 package org.thingsboard.server.common.data.query;
 
+/**
+ * 实体key值的类型
+ */
 public enum EntityKeyValueType {
+    /**
+     * 字符串
+     */
     STRING,
+
+    /**
+     * 数字
+     */
     NUMERIC,
+
+    /**
+     * 布尔值
+     */
     BOOLEAN,
+
+    /**
+     * 时间错
+     */
     DATE_TIME
 }

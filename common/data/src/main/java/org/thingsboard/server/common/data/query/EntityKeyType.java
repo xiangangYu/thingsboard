@@ -15,12 +15,36 @@
  */
 package org.thingsboard.server.common.data.query;
 
+/**
+ * 实体key类型枚举
+ */
 public enum EntityKeyType {
+    /**
+     * 属性
+     */
     ATTRIBUTE,
+    /**
+     * 客户端属性
+     */
     CLIENT_ATTRIBUTE,
+    /**
+     * 共享属性
+     */
     SHARED_ATTRIBUTE,
+    /**
+     * 服务端属性
+     */
     SERVER_ATTRIBUTE,
+    /**
+     * 时序数据
+     */
     TIME_SERIES,
+    /**
+     * 实体属性
+     */
     ENTITY_FIELD,
+    /**
+     * 告警属性
+     */
     ALARM_FIELD;
 }

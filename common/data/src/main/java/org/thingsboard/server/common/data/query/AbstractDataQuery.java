@@ -20,13 +20,28 @@ import lombok.ToString;
 
 import java.util.List;
 
+/**
+ * 抽象数据查询
+ * @param <T>
+ */
 @ToString(callSuper = true)
 public abstract class AbstractDataQuery<T extends EntityDataPageLink> extends EntityCountQuery {
 
+    /**
+     * 分页信息
+     */
     @Getter
     protected T pageLink;
+
+    /**
+     * 实体属性列表
+     */
     @Getter
     protected List<EntityKey> entityFields;
+
+    /**
+     * 实体列表最新值
+     */
     @Getter
     protected List<EntityKey> latestValues;
 

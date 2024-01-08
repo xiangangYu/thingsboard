@@ -24,6 +24,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * WebSocket会话实体引用
+ *
  * Created by ashvayka on 27.03.18.
  */
 @Builder
@@ -32,11 +34,34 @@ public class WebSocketSessionRef {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * 会话ID
+     */
     private final String sessionId;
+
+    /**
+     * 租户认证信息
+     */
     private SecurityUser securityCtx;
+
+    /**
+     * 本地地址
+     */
     private final InetSocketAddress localAddress;
+
+    /**
+     * 远程地址
+     */
     private final InetSocketAddress remoteAddress;
+
+    /**
+     * 会话类型，通用general,遥测telemetry,通知notifications
+     */
     private final WebSocketSessionType sessionType;
+
+    /**
+     * 会话订阅ID序列号
+     */
     private final AtomicInteger sessionSubIdSeq = new AtomicInteger();
 
     @Override

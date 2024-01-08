@@ -15,9 +15,28 @@
  */
 package org.thingsboard.server.common.data.query;
 
+/**
+ * 动态值源类型枚举
+ */
 public enum DynamicValueSourceType {
+
+    /**
+     * 当前租户
+     */
     CURRENT_TENANT,
+
+    /**
+     * 当前客户
+     */
     CURRENT_CUSTOMER,
+
+    /**
+     * 当前用户
+     */
     CURRENT_USER,
+
+    /**
+     * 当前设备
+     */
     CURRENT_DEVICE
 }

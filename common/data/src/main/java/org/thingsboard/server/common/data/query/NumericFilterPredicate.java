@@ -17,6 +17,9 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
+/**
+ * 数字过滤器断言
+ */
 @Data
 public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double>  {
 
@@ -28,12 +31,38 @@ public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double> 
         return FilterPredicateType.NUMERIC;
     }
 
+    /**
+     * 数字操作枚举
+     */
     public enum NumericOperation {
+        /**
+         * 等于
+         */
         EQUAL,
+
+        /**
+         * 不等于
+         */
         NOT_EQUAL,
+
+        /**
+         * 大于
+         */
         GREATER,
+
+        /**
+         * 小于
+         */
         LESS,
+
+        /**
+         * 大于或等于
+         */
         GREATER_OR_EQUAL,
+
+        /**
+         * 小于或等于
+         */
         LESS_OR_EQUAL
     }
 }

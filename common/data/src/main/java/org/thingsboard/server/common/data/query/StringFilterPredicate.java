@@ -19,6 +19,9 @@ import lombok.Data;
 
 import javax.validation.Valid;
 
+/**
+ * 字符串过滤器断言
+ */
 @Data
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
 
@@ -32,14 +35,48 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
         return FilterPredicateType.STRING;
     }
 
+    /**
+     * 字符串操作枚举
+     */
     public enum StringOperation {
+        /**
+         * 等于
+         */
         EQUAL,
+
+        /**
+         * 不等于
+         */
         NOT_EQUAL,
+
+        /**
+         * 开始于
+         */
         STARTS_WITH,
+
+        /**
+         * 结束于
+         */
         ENDS_WITH,
+
+        /**
+         * 包含
+         */
         CONTAINS,
+
+        /**
+         * 不包含
+         */
         NOT_CONTAINS,
+
+        /**
+         * 在什么范围之内
+         */
         IN,
+
+        /**
+         * 不在什么范围内
+         */
         NOT_IN
     }
 }
