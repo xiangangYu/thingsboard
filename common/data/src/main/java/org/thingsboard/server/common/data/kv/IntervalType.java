@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.monitoring.config.transport;
+package org.thingsboard.server.common.data.kv;
 
-import lombok.Data;
+public enum IntervalType {
 
-@Data
-public class TransportInfo {
-
-    private final TransportType transportType;
-    private final String baseUrl;
-    private final String queue;
-
-    @Override
-    public String toString() {
-        if (queue.equals("Main")) {
-            return String.format("*%s* (%s)", transportType.getName(), baseUrl);
-        } else {
-            return String.format("*%s* (%s) _%s_", transportType.getName(), baseUrl, queue);
-        }
-    }
+    MILLISECONDS, WEEK/*Sunday-Saturday*/, WEEK_ISO/*Monday-Sunday*/, MONTH, QUARTER
 
 }
