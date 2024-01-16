@@ -33,6 +33,9 @@ public class PageData<T> implements Serializable {
 
     public static final PageData EMPTY_PAGE_DATA = new PageData<>();
 
+    /**
+     * 数据列表
+     */
     private final List<T> data;
     private final int totalPages;
     private final long totalElements;

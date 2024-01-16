@@ -57,6 +57,10 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
     private LatestValueCmd latestValueCmd;
     @Getter
     private final int maxEntitiesPerDataSubscription;
+
+    /**
+     * 最新的时序实体数据，这个变量为什么不初始化呢？
+     */
     private Map<EntityId, Map<String, TsValue>> latestTsEntityData;
 
     public TbEntityDataSubCtx(String serviceId, WebSocketService wsService, EntityService entityService,
@@ -68,7 +72,9 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
 
     @Override
     public void fetchData() {
+        // super.fetchData()查询数据并赋值给data
         super.fetchData();
+        // 使用查询到的数据更新数据
         this.updateLatestTsData(this.data);
     }
 
@@ -184,10 +190,12 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         latestTsEntityData = new HashMap<>();
         data.getData().stream().forEach(entityData -> {
             Map<String, TsValue> latestTsMap = new HashMap<>();
+            // 先初始化一个空的map
             latestTsEntityData.put(entityData.getEntityId(), latestTsMap);
             if (entityData.getLatest() != null) {
                 Map<String, TsValue> latestTsValues = entityData.getLatest().get(EntityKeyType.TIME_SERIES);
                 if (latestTsValues != null) {
+                    // 如果查询的有值，把所有的值put到上面的空的map
                     latestTsValues.forEach(latestTsMap::put);
                 }
             }

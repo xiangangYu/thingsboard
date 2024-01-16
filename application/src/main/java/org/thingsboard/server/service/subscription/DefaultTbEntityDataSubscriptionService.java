@@ -177,14 +177,19 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         TbEntityDataSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
         if (ctx != null) {
             log.debug("[{}][{}] Updating existing subscriptions using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
+            // 实体订阅上下文有命令，先清除命令
             if (cmd.hasAnyCmd()) {
                 ctx.clearEntitySubscriptions();
             }
         } else {
             log.debug("[{}][{}] Creating new subscription using: {}", session.getSessionId(), cmd.getCmdId(), cmd);
+            // 如果没有上下文，创建一个上下文
             ctx = createSubCtx(session, cmd);
         }
+        // 设置当前的指令
         ctx.setCurrentCmd(cmd);
+
+        // 分两部分来进行处理，如果查询不为null,先执行查询数据
 
         // Fetch entity list using entity data query
         if (cmd.getQuery() != null) {
@@ -203,12 +208,18 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                     }
                 });
             }
+            // 记录开始时间
             long start = System.currentTimeMillis();
+            // 指定查询获取数据
             ctx.fetchData();
+            // 记录结束时间
             long end = System.currentTimeMillis();
+            // 通用查询调用加1
             stats.getRegularQueryInvocationCnt().incrementAndGet();
+            // 通用查询时间花费，上面两个时间相减
             stats.getRegularQueryTimeSpent().addAndGet(end - start);
             ctx.cancelTasks();
+            // 如果是动态的，那么间隔指定时间刷新状态信息
             if (ctx.getQuery().getPageLink().isDynamic()) {
                 //TODO: validate number of dynamic page links against rate limits. Ignore dynamic flag if limit is reached.
                 TbEntityDataSubCtx finalCtx = ctx;
@@ -219,6 +230,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             }
         }
 
+        // 接着执行指令进行逻辑处理
         try {
             List<ListenableFuture<?>> cmdFutures = new ArrayList<>();
             if (cmd.getAggHistoryCmd() != null) {

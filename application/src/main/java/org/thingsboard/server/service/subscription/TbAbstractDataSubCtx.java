@@ -46,7 +46,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends EntityDataPageLink>> extends TbAbstractSubCtx<T> {
 
+    /**
+     * 订阅到实体ID的map
+     */
     protected final Map<Integer, EntityId> subToEntityIdMap;
+
+    /**
+     * 实体数据
+     */
     @Getter
     protected PageData<EntityData> data;
 
