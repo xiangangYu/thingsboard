@@ -300,7 +300,9 @@ public class AuthController extends BaseController {
 
     private void logLogoutAction(HttpServletRequest request) throws ThingsboardException {
         var user = getCurrentUser();
+        // 审计记录退出登录
         systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(request), ActionType.LOGOUT, null);
+        // 发布session失效，清除token
         eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
     }
 

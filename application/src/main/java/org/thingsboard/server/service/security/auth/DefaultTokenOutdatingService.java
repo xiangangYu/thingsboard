@@ -43,6 +43,7 @@ public class DefaultTokenOutdatingService implements TokenOutdatingService {
     @EventListener(classes = UserAuthDataChangedEvent.class)
     public void onUserAuthDataChanged(UserAuthDataChangedEvent event) {
         if (StringUtils.hasText(event.getId())) {
+            // 针对"UserSessionInvalidationEvent"事件，缓存key是会话sessionId,value是事件发生时间或签发时间
             cache.put(event.getId(), event.getTs());
         }
     }
@@ -64,6 +65,7 @@ public class DefaultTokenOutdatingService implements TokenOutdatingService {
     }
 
     private boolean isTokenOutdated(long issueTime, Long outdatageTime) {
+        // 当token的签发时间小于缓存的签发时间(或变更时间)时，认为token过期了
         return MILLISECONDS.toSeconds(issueTime) < MILLISECONDS.toSeconds(outdatageTime);
     }
 }
