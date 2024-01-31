@@ -52,20 +52,21 @@ import {
   ColorRangeSettingsComponent, ColorRangeSettingsComponentService
 } from '@home/components/widget/lib/settings/common/color-range-settings.component';
 import {
-  RpcInitialStateSettingsComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-initial-state-settings.component';
+  GetValueActionSettingsComponent
+} from '@home/components/widget/lib/settings/common/action/get-value-action-settings.component';
 import {
-  RpcInitialStateSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-initial-state-settings-panel.component';
+  GetValueActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/get-value-action-settings-panel.component';
 import {
   DeviceKeyAutocompleteComponent
 } from '@home/components/widget/lib/settings/control/device-key-autocomplete.component';
 import {
-  RpcUpdateStateSettingsComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-update-state-settings.component';
+  SetValueActionSettingsComponent
+} from '@home/components/widget/lib/settings/common/action/set-value-action-settings.component';
 import {
-  RpcUpdateStateSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-update-state-settings-panel.component';
+  SetValueActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
+import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
 
 @NgModule({
   declarations: [
@@ -76,6 +77,7 @@ import {
     ColorSettingsComponent,
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
+    CssSizeInputComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     BackgroundSettingsComponent,
@@ -87,11 +89,11 @@ import {
     ColorRangeListComponent,
     ColorRangePanelComponent,
     ColorRangeSettingsComponent,
-    RpcInitialStateSettingsComponent,
-    RpcInitialStateSettingsPanelComponent,
+    GetValueActionSettingsComponent,
+    GetValueActionSettingsPanelComponent,
     DeviceKeyAutocompleteComponent,
-    RpcUpdateStateSettingsComponent,
-    RpcUpdateStateSettingsPanelComponent
+    SetValueActionSettingsComponent,
+    SetValueActionSettingsPanelComponent
   ],
   imports: [
     CommonModule,
@@ -106,6 +108,7 @@ import {
     ColorSettingsComponent,
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
+    CssSizeInputComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     BackgroundSettingsComponent,
@@ -117,11 +120,11 @@ import {
     ColorRangeListComponent,
     ColorRangePanelComponent,
     ColorRangeSettingsComponent,
-    RpcInitialStateSettingsComponent,
-    RpcInitialStateSettingsPanelComponent,
+    GetValueActionSettingsComponent,
+    GetValueActionSettingsPanelComponent,
     DeviceKeyAutocompleteComponent,
-    RpcUpdateStateSettingsComponent,
-    RpcUpdateStateSettingsPanelComponent
+    SetValueActionSettingsComponent,
+    SetValueActionSettingsPanelComponent
   ],
   providers: [
     ColorSettingsComponentService,
