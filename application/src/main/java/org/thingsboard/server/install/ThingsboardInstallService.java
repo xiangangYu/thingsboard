@@ -101,7 +101,7 @@ public class ThingsboardInstallService {
         try {
             if (isUpgrade) {
                 log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
-
+                // 根据升级版本清除缓存
                 cacheCleanupService.clearCache(upgradeFromVersion);
 
                 if ("2.5.0-cassandra".equals(upgradeFromVersion)) {

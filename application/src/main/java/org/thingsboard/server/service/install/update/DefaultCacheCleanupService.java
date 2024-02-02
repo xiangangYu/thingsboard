@@ -50,6 +50,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
         switch (fromVersion) {
             case "3.0.1":
                 log.info("Clear cache to upgrade from version 3.0.1 to 3.1.0 ...");
+                // 清除所有的缓存，里面也是迭代一个个根据名称清除缓存
                 clearAllCaches();
                 //do not break to show explicit calls for next versions
             case "3.1.1":
@@ -100,6 +101,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
     }
 
     void clearAllCaches() {
+        // 集合的lambda迭代操作
         cacheManager.getCacheNames().forEach(this::clearCacheByName);
     }
 
@@ -111,9 +113,11 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
     }
 
     void clearAll() {
+        // 使用Spring提供的缓存或者Redis缓存，如果是Redis缓存就
         if (redisTemplate.isPresent()) {
             log.info("Flushing all caches");
             redisTemplate.get().execute((RedisCallback<Object>) connection -> {
+                // 清除redis中的所有数据
                 connection.flushAll();
                 return null;
             });
