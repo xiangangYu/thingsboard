@@ -87,10 +87,12 @@ public abstract class AbstractCassandraCluster {
     }
 
     private boolean isInstall() {
+        // Return whether the active profiles match the given
         return environment.acceptsProfiles(Profiles.of("install"));
     }
 
     private void initSession() {
+        // cassandra的keyspace(键空间)类似于mysql的数据库
         if (this.keyspaceName != null) {
             this.sessionBuilder.withKeyspace(this.keyspaceName);
         }

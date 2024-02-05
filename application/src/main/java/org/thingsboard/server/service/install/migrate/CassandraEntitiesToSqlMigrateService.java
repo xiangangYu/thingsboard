@@ -73,6 +73,7 @@ public class CassandraEntitiesToSqlMigrateService implements EntitiesMigrateServ
             log.error("Unexpected error during ThingsBoard entities data migration!", e);
             throw e;
         }
+        // 创建表的索引
         entityDatabaseSchemaService.createDatabaseIndexes();
     }
 

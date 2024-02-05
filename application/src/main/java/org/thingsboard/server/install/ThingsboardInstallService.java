@@ -105,7 +105,8 @@ public class ThingsboardInstallService {
                 cacheCleanupService.clearCache(upgradeFromVersion);
 
                 if ("2.5.0-cassandra".equals(upgradeFromVersion)) {
-                    log.info("Migrating ThingsBoard entities data from cassandra to SQL database ...");
+                    log.info("Migrating(迁移) ThingsBoard entities data from cassandra to SQL database ...");
+                    // 查询原始数据然后插入到指定的表中
                     entitiesMigrateService.migrate();
                     log.info("Updating system data...");
                     systemDataLoaderService.loadSystemWidgets();

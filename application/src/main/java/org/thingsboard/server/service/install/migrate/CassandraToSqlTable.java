@@ -77,6 +77,7 @@ public class CassandraToSqlTable {
     public void migrateToSql(GuavaSession session, Connection conn) throws SQLException {
         log.info("[{}] Migrating data from cassandra '{}' Column Family to '{}' SQL table...", this.sqlTableName, this.cassandraCf, this.sqlTableName);
         DatabaseMetaData metadata = conn.getMetaData();
+        // catalog:目录,criteria:标准,fractional:分数
         java.sql.ResultSet resultSet = metadata.getColumns(null, null, this.sqlTableName, null);
         while (resultSet.next()) {
             String name = resultSet.getString("COLUMN_NAME");
@@ -86,6 +87,7 @@ public class CassandraToSqlTable {
             column.setSize(size);
             column.setSqlType(sqlType);
         }
+        // 下面的代码查询输入然后把数据插入到指定的表完成数据的迁移
         this.sqlInsertStatement = createSqlInsertStatement(conn);
         Statement cassandraSelectStatement = createCassandraSelectStatement();
         cassandraSelectStatement.setPageSize(100);
@@ -97,6 +99,7 @@ public class CassandraToSqlTable {
         do {
             batchData = this.extractBatchData(iter);
             hasNext = batchData.size() == this.batchSize;
+            // 在里面进行了插入的执行sqlInsertStatement.executeUpdate()
             this.batchInsert(batchData, conn);
             rowCounter += batchData.size();
             log.info("[{}] {} records migrated so far...", this.sqlTableName, rowCounter);
@@ -270,6 +273,7 @@ public class CassandraToSqlTable {
     }
 
     protected Statement createCassandraSelectStatement() {
+        // 构建select查询
         StringBuilder selectStatementBuilder = new StringBuilder();
         selectStatementBuilder.append("SELECT ");
         for (CassandraToSqlColumn column : columns) {
@@ -281,6 +285,7 @@ public class CassandraToSqlTable {
     }
 
     private PreparedStatement createSqlInsertStatement(Connection conn) throws SQLException {
+        // 拼sql插入数据
         StringBuilder insertStatementBuilder = new StringBuilder();
         insertStatementBuilder.append("INSERT INTO ").append(this.sqlTableName).append(" (");
         for (CassandraToSqlColumn column : columns) {

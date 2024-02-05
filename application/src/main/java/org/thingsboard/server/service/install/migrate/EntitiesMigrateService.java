@@ -17,6 +17,7 @@ package org.thingsboard.server.service.install.migrate;
 
 public interface EntitiesMigrateService {
 
+    // 业务都是面向接口编程、封装了具体的实现
     void migrate() throws Exception;
 
 }
