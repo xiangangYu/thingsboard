@@ -94,8 +94,10 @@ public class ImagesUpdater {
         for (E entity : entities) {
             totalCount++;
             try {
+                // BiFunction二元函数的使用
                 boolean updated = updater.apply(entity, type);
                 if (updated) {
+                    // 如果替换成功就保存信息
                     dao.save(entity.getTenantId(), entity);
                     log.debug("[{}][{}] Updated {} images", entity.getTenantId(), entity.getName(), type);
                     updatedCount++;
@@ -165,6 +167,29 @@ public class ImagesUpdater {
             }
         }
         return new int[]{totalCount, updatedCount};
+    }
+
+    public static void main(String[] args) {
+        System.out.println("--------------Integer----------------------------");
+        Integer r = consumer(2, 3, (x, y) -> x * y);
+        System.out.println(r);
+        System.out.println("-------------字符串-----------------------------");
+        String r1 = consumer(new StringBuffer("sfda"), new StringBuffer("TTT"), (x, y) -> x.append(y).toString());
+        System.out.println(r1);
+        System.out.println("----------------AndThen--------------------------");
+        Integer r2 = consumerAndThen(2, 3, (x, y) -> x * y, y -> y * y);
+        System.out.println(r2);
+        System.out.println("----------------AndThen-字符串-------------------------");
+        String r3 = consumerAndThen("abc", "def", (x, y) -> x + y, y -> y + y);
+        System.out.println(r3);
+    }
+
+    public static <D, T, R> R consumer(D a, T b, BiFunction<D, T, R> function) {
+        return function.apply(a, b);
+    }
+
+    public static <D, T, R, V> V consumerAndThen(D a, T b, BiFunction<D, T, R> function, Function<R, V> after) {
+        return function.andThen(after).apply(a, b);
     }
 
 }

@@ -205,6 +205,8 @@ public class InstallScripts {
         log.info("Loading system widgets");
         Map<Path, JsonNode> widgetsBundlesMap = new HashMap<>();
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
+        // 通过newDirectoryStream获取指定目录下的文件并指定具体的过滤器
+        // 删除系统的widget
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
@@ -235,6 +237,7 @@ public class InstallScripts {
                     }
             );
         }
+        // 保存系统widget
         Path widgetTypesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
         if (Files.exists(widgetTypesDir)) {
             try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetTypesDir, path -> path.toString().endsWith(JSON_EXT))) {
@@ -290,6 +293,7 @@ public class InstallScripts {
     }
 
     private void deleteSystemWidgetBundle(String bundleAlias) {
+        // 删除系统widget信息
         WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
         if (widgetsBundle != null) {
             PageData<WidgetTypeInfo> widgetTypes;
@@ -306,6 +310,7 @@ public class InstallScripts {
     }
 
     public void updateImages() {
+        // 里面使用了BiFunction二元函数进行操作
         imagesUpdater.updateWidgetsBundlesImages();
         imagesUpdater.updateWidgetTypesImages();
         imagesUpdater.updateDashboardsImages();
@@ -320,6 +325,7 @@ public class InstallScripts {
         try (dashboardsFiles) {
             dashboardsFiles.forEach(file -> {
                 try {
+                    // 应用(仪表板)
                     Dashboard dashboard = JacksonUtil.OBJECT_MAPPER.readValue(file.toFile(), Dashboard.class);
                     imagesUpdater.createSystemImages(dashboard);
                 } catch (Exception e) {

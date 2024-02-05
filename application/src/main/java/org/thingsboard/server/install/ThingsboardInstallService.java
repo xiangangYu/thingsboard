@@ -109,11 +109,13 @@ public class ThingsboardInstallService {
                     // 查询原始数据然后插入到指定的表中
                     entitiesMigrateService.migrate();
                     log.info("Updating system data...");
+                    // 先删除系统widget再保存系统widget
                     systemDataLoaderService.loadSystemWidgets();
                 } else if ("3.0.1-cassandra".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
                 } else if (upgradeFromVersion.equals("3.6.2-images")) {
+                    // 更新镜像:先替换再保存
                     installScripts.updateImages();
                 } else {
                     switch (upgradeFromVersion) {
@@ -191,6 +193,7 @@ public class ThingsboardInstallService {
                             log.info("Upgrading ThingsBoard from version 2.5.1 to 3.0.0 ...");
                         case "3.0.1":
                             log.info("Upgrading ThingsBoard from version 3.0.1 to 3.1.0 ...");
+                            // 根据不同的版本号执行不同的修改表操作sql
                             databaseEntitiesUpgradeService.upgradeDatabase("3.0.1");
                             dataUpdateService.updateData("3.0.1");
                         case "3.1.0":
@@ -203,6 +206,7 @@ public class ThingsboardInstallService {
                             }
                             databaseEntitiesUpgradeService.upgradeDatabase("3.1.1");
                             dataUpdateService.updateData("3.1.1");
+                            // 根据指定目录中的OAuth2信息创建OAuth2并保存
                             systemDataLoaderService.createOAuth2Templates();
                         case "3.2.0":
                             log.info("Upgrading ThingsBoard from version 3.2.0 to 3.2.1 ...");
@@ -244,6 +248,7 @@ public class ThingsboardInstallService {
                         case "3.4.1":
                             log.info("Upgrading ThingsBoard from version 3.4.1 to 3.4.2 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.4.1");
+                            // 转换实体并更新
                             dataUpdateService.updateData("3.4.1");
                         case "3.4.2":
                             log.info("Upgrading ThingsBoard from version 3.4.2 to 3.4.3 ...");
@@ -286,11 +291,16 @@ public class ThingsboardInstallService {
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
                     }
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
+                    // 创建或更新设备的view
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                     log.info("Updating system data...");
+                    // 升级规则节点
                     dataUpdateService.upgradeRuleNodes();
+                    // 加载系统widget
                     systemDataLoaderService.loadSystemWidgets();
+                    // 加载Lwm2m资源
                     installScripts.loadSystemLwm2mResources();
+                    // 加载系统镜像
                     installScripts.loadSystemImages();
                     if (installScripts.isUpdateImages()) {
                         installScripts.updateImages();
@@ -304,6 +314,7 @@ public class ThingsboardInstallService {
 
                 log.info("Installing DataBase schema for entities...");
 
+                // 创建数据库schema
                 entityDatabaseSchemaService.createDatabaseSchema();
 
                 entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
@@ -320,27 +331,37 @@ public class ThingsboardInstallService {
                 if (tsLatestDatabaseSchemaService != null) {
                     tsLatestDatabaseSchemaService.createDatabaseSchema();
                 }
-
+                // 下面的调用都是面向接口编程的方式
                 log.info("Loading system data...");
-
+                // 加载系统组件
                 componentDiscoveryService.discoverComponents();
-
+                // 创建系统admin
                 systemDataLoaderService.createSysAdmin();
+                // 创建默认的租户profile
                 systemDataLoaderService.createDefaultTenantProfiles();
+                // 创建admin设置
                 systemDataLoaderService.createAdminSettings();
+                // 创建随机的jwt设置
                 systemDataLoaderService.createRandomJwtSettings();
+                // 加载系统widget
                 systemDataLoaderService.loadSystemWidgets();
+                // 创建OAuth2认证模板
                 systemDataLoaderService.createOAuth2Templates();
+                // 创建查询
                 systemDataLoaderService.createQueues();
+                // 创建默认的通知配置
                 systemDataLoaderService.createDefaultNotificationConfigs();
 
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
+                // 加载Lwm2m资源
                 installScripts.loadSystemLwm2mResources();
+                // 加载系统镜像
                 installScripts.loadSystemImages();
 
                 if (loadDemo) {
                     log.info("Loading demo data...");
+                    // 加载demo数据
                     systemDataLoaderService.loadDemoData();
                 }
                 log.info("Installation finished successfully!");

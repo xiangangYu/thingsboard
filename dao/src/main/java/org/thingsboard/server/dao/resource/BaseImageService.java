@@ -432,6 +432,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         String mdResourceName = null;
         String mdMediaType;
         if (matches) {
+            // 下面的StandardCharsets定义了常用的标准字符集
             mdResourceKey = new String(Base64Utils.decodeFromString(matcher.group(1)), StandardCharsets.UTF_8);
             mdResourceName = new String(Base64Utils.decodeFromString(matcher.group(2)), StandardCharsets.UTF_8);
             mdMediaType = matcher.group(3);
