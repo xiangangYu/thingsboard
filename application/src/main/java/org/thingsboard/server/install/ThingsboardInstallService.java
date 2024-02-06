@@ -24,14 +24,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.install.DatabaseEntitiesUpgradeService;
-import org.thingsboard.server.service.install.DatabaseTsUpgradeService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.NoSqlKeyspaceService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
 import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
-import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
@@ -70,9 +68,6 @@ public class ThingsboardInstallService {
     @Autowired
     private DatabaseEntitiesUpgradeService databaseEntitiesUpgradeService;
 
-    @Autowired(required = false)
-    private DatabaseTsUpgradeService databaseTsUpgradeService;
-
     @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
 
@@ -89,9 +84,6 @@ public class ThingsboardInstallService {
     private CacheCleanupService cacheCleanupService;
 
     @Autowired(required = false)
-    private EntitiesMigrateService entitiesMigrateService;
-
-    @Autowired(required = false)
     private TsLatestMigrateService latestMigrateService;
 
     @Autowired
@@ -104,6 +96,7 @@ public class ThingsboardInstallService {
                 // 根据升级版本清除缓存
                 cacheCleanupService.clearCache(upgradeFromVersion);
 
+                if ("cassandra-latest-to-postgres".equals(upgradeFromVersion)) {
                 if ("2.5.0-cassandra".equals(upgradeFromVersion)) {
                     log.info("Migrating(迁移) ThingsBoard entities data from cassandra to SQL database ...");
                     // 查询原始数据然后插入到指定的表中
