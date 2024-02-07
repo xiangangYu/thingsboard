@@ -17,6 +17,8 @@ package org.thingsboard.server.common.msg;
 
 /**
  * Created by ashvayka on 15.03.18.
+ *
+ * Actor消息的顶层接口
  */
 public interface TbActorMsg {
 

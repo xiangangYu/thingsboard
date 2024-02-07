@@ -17,6 +17,9 @@ package org.thingsboard.server.actors;
 
 import org.thingsboard.server.common.msg.TbActorMsg;
 
+/**
+ * Actor引用顶级接口
+ */
 public interface TbActorRef {
 
     TbActorId getActorId();

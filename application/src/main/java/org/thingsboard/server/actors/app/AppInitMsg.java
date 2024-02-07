@@ -18,6 +18,9 @@ package org.thingsboard.server.actors.app;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
+/**
+ * app初始化消息
+ */
 public class AppInitMsg implements TbActorMsg {
 
     @Override

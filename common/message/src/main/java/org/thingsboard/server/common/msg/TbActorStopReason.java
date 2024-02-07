@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.msg;
 
 public enum TbActorStopReason {
-
+    // 两种Actor停止原因
     INIT_FAILED, STOPPED
 
 }

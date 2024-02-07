@@ -52,8 +52,11 @@ import java.util.Set;
 @Slf4j
 public class AppActor extends ContextAwareActor {
 
+    // 租户服务
     private final TenantService tenantService;
+    // 删除的租户
     private final Set<TenantId> deletedTenants;
+    // 规则链是否已初始化，volatile表示变量是易变的，每次获取其值都要从共享内容把值同步到本地
     private volatile boolean ruleChainsInitialized;
 
     private AppActor(ActorSystemContext systemContext) {

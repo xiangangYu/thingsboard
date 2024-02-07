@@ -18,6 +18,9 @@ package org.thingsboard.server.actors;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbActorStopReason;
 
+/**
+ * Actor顶级接口
+ */
 public interface TbActor {
 
     boolean process(TbActorMsg msg);
