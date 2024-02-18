@@ -69,6 +69,7 @@ public class AppActor extends ContextAwareActor {
     public void init(TbActorCtx ctx) throws TbActorException {
         super.init(ctx);
         if (systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE)) {
+            // 固定延迟的调度任务
             systemContext.schedulePeriodicMsgWithDelay(ctx, SessionTimeoutCheckMsg.instance(),
                     systemContext.getSessionReportTimeout(), systemContext.getSessionReportTimeout());
         }

@@ -18,7 +18,7 @@ package org.thingsboard.server.actors;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 /**
- * Actor引用顶级接口
+ * Actor引用顶级接口,邮箱
  */
 public interface TbActorRef {
 
