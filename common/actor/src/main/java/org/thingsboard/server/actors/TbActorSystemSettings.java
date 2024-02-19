@@ -20,8 +20,11 @@ import lombok.Data;
 @Data
 public class TbActorSystemSettings {
 
+    // actor的吞吐量
     private final int actorThroughput;
+    // 调度的线程池大小
     private final int schedulerPoolSize;
+    // actor最大的初始化尝试次数
     private final int maxActorInitAttempts;
 
 }
