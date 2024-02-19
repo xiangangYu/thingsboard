@@ -105,6 +105,7 @@ public final class TbActorMailbox implements TbActorCtx {
 
     private void enqueue(TbActorMsg msg, boolean highPriority) {
         if (!destroyInProgress.get()) {
+            // 没有在destroy
             if (highPriority) {
                 highPriorityMsgs.add(msg);
             } else {
@@ -112,6 +113,7 @@ public final class TbActorMailbox implements TbActorCtx {
             }
             tryProcessQueue(true);
         } else {
+            // 在destroy
             if (highPriority && msg.getMsgType().equals(MsgType.RULE_NODE_UPDATED_MSG)) {
                 synchronized (this) {
                     if (stopReason == TbActorStopReason.INIT_FAILED) {
@@ -146,7 +148,9 @@ public final class TbActorMailbox implements TbActorCtx {
 
     private void processMailbox() {
         boolean noMoreElements = false;
+        // 根据配置的吞吐量进行循环调度执行
         for (int i = 0; i < settings.getActorThroughput(); i++) {
+            // 先从高优先级的队列中取出消息，再从普通优先级的队列中取出消息
             TbActorMsg msg = highPriorityMsgs.poll();
             if (msg == null) {
                 msg = normalPriorityMsgs.poll();
@@ -154,6 +158,7 @@ public final class TbActorMailbox implements TbActorCtx {
             if (msg != null) {
                 try {
                     log.debug("[{}] Going to process message: {}", selfId, msg);
+                    // 传递到actor执行消费
                     actor.process(msg);
                 } catch (TbRuleNodeUpdateException updateException) {
                     stopReason = TbActorStopReason.INIT_FAILED;

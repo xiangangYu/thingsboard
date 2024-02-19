@@ -24,8 +24,10 @@ public interface TbActorRef {
 
     TbActorId getActorId();
 
+    // 消息入邮箱的队列，普通权限
     void tell(TbActorMsg actorMsg);
 
+    // 消息入邮箱的队列，高级权限
     void tellWithHighPriority(TbActorMsg actorMsg);
 
 }

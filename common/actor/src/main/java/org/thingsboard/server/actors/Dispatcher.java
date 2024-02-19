@@ -19,6 +19,9 @@ import lombok.Data;
 
 import java.util.concurrent.ExecutorService;
 
+/**
+ * Actor模型中对应行为behavior
+ */
 @Data
 class Dispatcher {
 
