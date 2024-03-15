@@ -32,6 +32,8 @@
       removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
       noKeysText="{{ 'widgets.chart.no-series' | translate }}"
       requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+      timeSeriesChart
+      [yAxisIds]="yAxisIds"
       [showTimeSeriesType]="chartType === TimeSeriesChartType.default"
       hideSourceSelection
       [datasourceType]="datasource?.type"
@@ -39,12 +41,17 @@
       [entityAliasId]="datasource?.entityAliasId"
       formControlName="series">
   </tb-data-keys-panel>
+  <tb-time-series-chart-y-axes-panel
+    formControlName="yAxes"
+    (axisRemoved)="yAxisRemoved($event)">
+  </tb-time-series-chart-y-axes-panel>
   <tb-time-series-chart-thresholds-panel
     formControlName="thresholds"
     [aliasController]="aliasController"
     [dataKeyCallbacks]="callbacks"
     [datasource]="datasource"
-    [widgetConfig]="widgetConfig?.config">
+    [widgetConfig]="widgetConfig?.config"
+    [yAxisIds]="yAxisIds">
   </tb-time-series-chart-thresholds-panel>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
@@ -104,11 +111,7 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.axes</div>
-    <tb-time-series-chart-axis-settings
-      formControlName="yAxis"
-      axisType="yAxis">
-    </tb-time-series-chart-axis-settings>
+    <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.x-axis</div>
     <tb-time-series-chart-axis-settings
       formControlName="xAxis"
       axisType="xAxis">
@@ -186,7 +189,8 @@
             {{ 'tooltip.date' | translate }}
           </mat-slide-toggle>
           <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-            <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="tooltipDateFormat"></tb-date-format-select>
+            <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
+                                   formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
                               [previewText]="tooltipDatePreviewFn">
             </tb-font-settings>
@@ -220,6 +224,9 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
+  <tb-time-series-chart-animation-settings
+    formControlName="animation">
+  </tb-time-series-chart-animation-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between">
@@ -237,6 +244,12 @@
       <div>{{ 'widget-config.card-border-radius' | translate }}</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
   </div>

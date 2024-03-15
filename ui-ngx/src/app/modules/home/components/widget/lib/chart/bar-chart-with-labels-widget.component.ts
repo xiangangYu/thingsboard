@@ -37,7 +37,6 @@ import {
 } from '@shared/models/widget-settings.models';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { formatValue } from '@core/utils';
-import { DataKey } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -53,12 +52,12 @@ import { CallbackDataParams, CustomSeriesRenderItem, LabelLayoutOptionCallback }
 import {
   ECharts,
   echartsModule,
-  EChartsOption, EChartsSeriesItem,
+  EChartsOption,
+  EChartsSeriesItem,
   echartsTooltipFormatter,
-  NamedDataSet,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
-import { IntervalMath } from '@shared/models/time/time.models';
+import { AggregationType, IntervalMath } from '@shared/models/time/time.models';
 
 type BarChartDataItem = EChartsSeriesItem;
 
@@ -97,6 +96,10 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
   legendItems: BarChartLegendItem[];
   legendLabelStyle: ComponentStyle;
   disabledLegendLabelStyle: ComponentStyle;
+
+  private get noAggregation(): boolean {
+    return this.ctx.defaultSubscription.timeWindowConfig?.aggregation?.type === AggregationType.NONE;
+  }
 
   private shapeResize$: ResizeObserver;
 
@@ -381,7 +384,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
       tooltip: {
         trigger: 'axis',
         confine: true,
-        appendToBody: true,
+        appendTo: 'body',
         axisPointer: {
           type: 'shadow'
         },
@@ -389,7 +392,8 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
           if (this.settings.showTooltip) {
             const focusedSeriesIndex = this.focusedSeriesIndex();
             return echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-              this.settings, params, this.decimals, this.units, focusedSeriesIndex);
+              this.settings, params, this.decimals, this.units, focusedSeriesIndex, null,
+              this.noAggregation ? null : this.ctx.timeWindow.interval);
           } else {
             return undefined;
           }

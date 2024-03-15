@@ -50,6 +50,11 @@
       min-width: 60px;
     }
 
+    &.tb-y-axis-header {
+      width: 100px;
+      min-width: 100px;
+    }
+
     &.tb-time-series-type-header {
       width: 60px;
       min-width: 60px;
@@ -70,7 +75,17 @@
         display: block;
       }
     }
+
+    &.tb-y-axis-header {
+      @media #{$mat-md} {
+        display: none;
+      }
+    }
+
     &.tb-time-series-type-header {
+      @media #{$mat-xs} {
+        display: none;
+      }
       @media #{$mat-md} {
         display: none;
       }

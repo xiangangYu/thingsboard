@@ -37,13 +37,13 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import {
+  autoDateFormat,
   backgroundStyle,
   ComponentStyle,
   DateFormatProcessor,
   getDataKey,
   getLatestSingleTsValue,
   overlayStyle,
-  simpleDateFormat,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { DataKey } from '@shared/models/widget.models';
@@ -58,6 +58,7 @@ import {
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { DeepPartial } from '@shared/models/common';
 
 const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;
@@ -172,25 +173,26 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
   ngAfterViewInit(): void {
     if (this.showChart && this.ctx.datasources?.length) {
-      const settings: TimeSeriesChartSettings = {
+      const settings: DeepPartial<TimeSeriesChartSettings> = {
           dataZoom: false,
           xAxis: {
             show: false
           },
-          yAxis: {
-            show: true,
-            showLine: false,
-            showTicks: false,
-            showTickLabels: false,
-            showSplitLines: true,
-            min: 'dataMin',
-            max: 'dataMax',
-            intervalCalculator:
-              'var scale = axis.scale; return !scale.isBlank() ? ((scale.getExtent()[1] - scale.getExtent()[0]) / 2) : undefined;'
+          yAxes: {
+            default: {
+              show: true,
+              showLine: false,
+              showTicks: false,
+              showTickLabels: false,
+              showSplitLines: true,
+              min: 'dataMin',
+              max: 'dataMax',
+              ticksGenerator: (extent?: number[]) => (extent ? [{ value: (extent[0] + extent[1]) / 2}] : [])
+            }
           },
           tooltipDateInterval: false,
-          tooltipDateFormat: simpleDateFormat('dd MMM yyyy HH:mm:ss')
-      } as TimeSeriesChartSettings;
+          tooltipDateFormat: autoDateFormat()
+      };
 
       this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, true);
 

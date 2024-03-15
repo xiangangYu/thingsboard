@@ -20,6 +20,7 @@ import {
   calculateThresholdsOffset,
   createTimeSeriesXAxisOption,
   createTimeSeriesYAxis,
+  defaultTimeSeriesChartYAxisSettings,
   generateChartData,
   parseThresholdData,
   SeriesLabelPosition,
@@ -27,13 +28,18 @@ import {
   timeSeriesChartDefaultSettings,
   timeSeriesChartKeyDefaultSettings,
   TimeSeriesChartKeySettings,
+  TimeSeriesChartNoAggregationBarWidthStrategy,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
   TimeSeriesChartShape,
+  TimeSeriesChartThreshold,
+  timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdItem,
   TimeSeriesChartThresholdType,
   TimeSeriesChartType,
   TimeSeriesChartYAxis,
+  TimeSeriesChartYAxisId,
+  TimeSeriesChartYAxisSettings,
   updateDarkMode
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -46,13 +52,12 @@ import {
   echartsTooltipFormatter,
   EChartsTooltipTrigger,
   getAxisExtent,
-  getYAxis,
   measureXAxisNameHeight,
   measureYAxisNameWidth,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { DateFormatProcessor } from '@shared/models/widget-settings.models';
-import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, isEqual, mergeDeep } from '@core/utils';
 import { DataKey, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
@@ -63,11 +68,13 @@ import { AggregationType } from '@shared/models/time/time.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DeepPartial } from '@shared/models/common';
+import { BarRenderSharedContext } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
 
 export class TbTimeSeriesChart {
 
   public static dataKeySettings(type = TimeSeriesChartType.default): DataKeySettingsFunction {
-    return (key, isLatestDataKey) => {
+    return (_key, isLatestDataKey) => {
       if (!isLatestDataKey) {
         const settings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
           timeSeriesChartKeyDefaultSettings);
@@ -94,9 +101,11 @@ export class TbTimeSeriesChart {
 
   private readonly shapeResize$: ResizeObserver;
 
+  private readonly settings: TimeSeriesChartSettings;
+
+  private yAxisList: TimeSeriesChartYAxis[] = [];
   private dataItems: TimeSeriesChartDataItem[] = [];
   private thresholdItems: TimeSeriesChartThresholdItem[] = [];
-  private yAxisList: TimeSeriesChartYAxis[] = [];
 
   private timeSeriesChart: ECharts;
   private timeSeriesChartOptions: EChartsOption;
@@ -116,17 +125,22 @@ export class TbTimeSeriesChart {
 
   private highlightedDataKey: DataKey;
 
+  private barRenderSharedContext: BarRenderSharedContext;
+
   yMin$ = this.yMinSubject.asObservable();
   yMax$ = this.yMaxSubject.asObservable();
 
   constructor(private ctx: WidgetContext,
-              private readonly settings: TimeSeriesChartSettings,
+              private readonly inputSettings: DeepPartial<TimeSeriesChartSettings>,
               private chartElement: HTMLElement,
               private renderer: Renderer2,
               private autoResize = true) {
 
-    this.settings = mergeDeep({} as TimeSeriesChartSettings, timeSeriesChartDefaultSettings, this.settings);
+    this.settings = mergeDeep({} as TimeSeriesChartSettings,
+      timeSeriesChartDefaultSettings,
+      this.inputSettings as TimeSeriesChartSettings);
     this.darkMode = this.settings.darkMode;
+    this.setupYAxes();
     this.setupData();
     this.setupThresholds();
     if (this.settings.showTooltip && this.settings.tooltipShowDate) {
@@ -150,7 +164,10 @@ export class TbTimeSeriesChart {
   public update(): void {
     for (const item of this.dataItems) {
       const datasourceData = this.ctx.data ? this.ctx.data.find(d => d.dataKey === item.dataKey) : null;
-      item.data = datasourceData?.data ? toNamedData(datasourceData.data) : [];
+      if (!isEqual(item.dataSet, datasourceData?.data)) {
+        item.dataSet = datasourceData?.data;
+        item.data = datasourceData?.data ? toNamedData(datasourceData.data) : [];
+      }
     }
     this.onResize();
     if (this.timeSeriesChart) {
@@ -162,6 +179,7 @@ export class TbTimeSeriesChart {
       } else {
         this.timeSeriesChartOptions.tooltip[0].axisPointer.type = 'shadow';
       }
+      this.barRenderSharedContext.timeInterval = this.ctx.timeWindow.interval;
       this.updateSeriesData(true);
       if (this.highlightedDataKey) {
         this.keyEnter(this.highlightedDataKey);
@@ -258,7 +276,8 @@ export class TbTimeSeriesChart {
     if (this.darkMode !== darkMode) {
       this.darkMode = darkMode;
       if (this.timeSeriesChart) {
-        this.timeSeriesChartOptions = updateDarkMode(this.timeSeriesChartOptions, this.settings, this.dataItems,
+        this.timeSeriesChartOptions = updateDarkMode(this.timeSeriesChartOptions,
+          this.settings, this.yAxisList, this.dataItems,
           this.thresholdItems, darkMode);
         this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
       }
@@ -270,6 +289,15 @@ export class TbTimeSeriesChart {
   }
 
   private setupData(): void {
+    const noAggregationBarWidthSettings = this.settings.noAggregationBarWidthSettings;
+    const targetBarWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
+      noAggregationBarWidthSettings.groupWidth : noAggregationBarWidthSettings.barWidth;
+    this.barRenderSharedContext = {
+      timeInterval: this.ctx.timeWindow?.interval,
+      noAggregationBarWidthStrategy: noAggregationBarWidthSettings.strategy,
+      noAggregationWidthRelative: targetBarWidth.relative,
+      noAggregationWidth: targetBarWidth.relative ? targetBarWidth.relativeWidth : targetBarWidth.absoluteWidth
+    };
     if (this.ctx.datasources.length) {
       for (const datasource of this.ctx.datasources) {
         const dataKeys = datasource.dataKeys;
@@ -287,11 +315,16 @@ export class TbTimeSeriesChart {
           const units = dataKey.units && dataKey.units.length ? dataKey.units : this.ctx.units;
           const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
             (isDefinedAndNotNull(this.ctx.decimals) ? this.ctx.decimals : 2);
+          let yAxisId = keySettings.yAxisId;
+          if (!Object.keys(this.settings.yAxes).includes(yAxisId)) {
+            yAxisId = 'default';
+          }
           this.dataItems.push({
             id: this.nextComponentId(),
             units,
             decimals,
-            yAxisIndex: this.getYAxis(units, decimals),
+            yAxisId,
+            yAxisIndex: this.getYAxisIndex(yAxisId),
             dataKey,
             data: namedData,
             enabled: !keySettings.dataHiddenByDefault
@@ -303,7 +336,9 @@ export class TbTimeSeriesChart {
 
   private setupThresholds(): void {
     const thresholdDatasources: Datasource[] = [];
-    for (const threshold of this.settings.thresholds) {
+    for (const thresholdSettings of this.settings.thresholds) {
+      const threshold = mergeDeep<TimeSeriesChartThreshold>({} as TimeSeriesChartThreshold,
+        timeSeriesChartThresholdDefaultSettings, thresholdSettings);
       let latestDataKey: DataKey = null;
       let entityDataKey: DataKey = null;
       let value = null;
@@ -351,11 +386,16 @@ export class TbTimeSeriesChart {
       const units = threshold.units && threshold.units.length ? threshold.units : this.ctx.units;
       const decimals = isDefinedAndNotNull(threshold.decimals) ? threshold.decimals :
         (isDefinedAndNotNull(this.ctx.decimals) ? this.ctx.decimals : 2);
+      let yAxisId = threshold.yAxisId;
+      if (!Object.keys(this.settings.yAxes).includes(yAxisId)) {
+        yAxisId = 'default';
+      }
       const thresholdItem: TimeSeriesChartThresholdItem = {
         id: this.nextComponentId(),
         units,
         decimals,
-        yAxisIndex: this.getYAxis(units, decimals),
+        yAxisId,
+        yAxisIndex: this.getYAxisIndex(yAxisId),
         value,
         latestDataKey,
         settings: threshold
@@ -368,17 +408,32 @@ export class TbTimeSeriesChart {
     this.subscribeForEntityThresholds(thresholdDatasources);
   }
 
+  private setupYAxes(): void {
+    const yAxisSettingsList = Object.values(this.settings.yAxes);
+    yAxisSettingsList.sort((a1, a2) => a1.order - a2.order);
+    for (const yAxisSettings of yAxisSettingsList) {
+      const axisSettings = mergeDeep<TimeSeriesChartYAxisSettings>({} as TimeSeriesChartYAxisSettings,
+        defaultTimeSeriesChartYAxisSettings, yAxisSettings);
+      const units = axisSettings.units && axisSettings.units.length ? axisSettings.units : this.ctx.units;
+      const decimals = isDefinedAndNotNull(axisSettings.decimals) ? axisSettings.decimals :
+        (isDefinedAndNotNull(this.ctx.decimals) ? this.ctx.decimals : 2);
+      const yAxis = createTimeSeriesYAxis(units, decimals, axisSettings, this.darkMode);
+      this.yAxisList.push(yAxis);
+    }
+  }
+
+
   private nextComponentId(): string {
     return (this.componentIndexCounter++) + '';
   }
 
-  private getYAxis(units: string, decimals: number): number {
-    let yAxisIndex = this.yAxisList.findIndex(axis => axis.units === units);
+  private getYAxisIndex(id: TimeSeriesChartYAxisId): number {
+    let yAxisIndex = this.yAxisList.findIndex(axis => axis.id === id);
     if (yAxisIndex === -1) {
-      const yAxisId = this.yAxisList.length + '';
-      const yAxis = createTimeSeriesYAxis(yAxisId, units, decimals, this.settings.yAxis, this.darkMode);
-      this.yAxisList.push(yAxis);
-      yAxisIndex = this.yAxisList.length - 1;
+      yAxisIndex = this.yAxisList.findIndex(axis => axis.id === 'default');
+      if (yAxisIndex === -1 && this.yAxisList.length) {
+        yAxisIndex = 0;
+      }
     }
     return yAxisIndex;
   }
@@ -424,13 +479,14 @@ export class TbTimeSeriesChart {
       tooltip: [{
         trigger: this.settings.tooltipTrigger === EChartsTooltipTrigger.axis ? 'axis' : 'item',
         confine: true,
-        appendToBody: true,
+        appendTo: 'body',
         axisPointer: {
           type: this.noAggregation ? 'line' : 'shadow'
         },
         formatter: (params: CallbackDataParams[]) =>
           this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-            this.settings, params, 0, '', -1, this.dataItems) : undefined,
+            this.settings, params, 0, '', -1, this.dataItems,
+            this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
         borderWidth: 0,
@@ -444,7 +500,7 @@ export class TbTimeSeriesChart {
       }],
       xAxis: [
         createTimeSeriesXAxisOption(this.settings.xAxis, this.ctx.defaultSubscription.timeWindow.minTime,
-          this.ctx.defaultSubscription.timeWindow.maxTime, this.darkMode)
+          this.ctx.defaultSubscription.timeWindow.maxTime, this.ctx.date, this.darkMode)
       ],
       yAxis: this.yAxisList.map(axis => axis.option),
       dataZoom: [
@@ -460,7 +516,15 @@ export class TbTimeSeriesChart {
           realtime: true,
           bottom: 10
         }
-      ]
+      ],
+      animation: this.settings.animation.animation,
+      animationThreshold: this.settings.animation.animationThreshold,
+      animationDuration: this.settings.animation.animationDuration,
+      animationEasing: this.settings.animation.animationEasing,
+      animationDelay: this.settings.animation.animationDelay,
+      animationDurationUpdate: this.settings.animation.animationDurationUpdate,
+      animationEasingUpdate: this.settings.animation.animationEasingUpdate,
+      animationDelayUpdate: this.settings.animation.animationDelayUpdate
     };
 
     this.timeSeriesChartOptions.xAxis[0].tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
@@ -491,10 +555,9 @@ export class TbTimeSeriesChart {
 
   private updateSeries(): Array<LineSeriesOption | CustomSeriesOption> {
     return generateChartData(this.dataItems, this.thresholdItems,
-      this.ctx.timeWindow.interval,
       this.settings.stack,
       this.noAggregation,
-      this.settings.noAggregationBarWidthSettings, this.darkMode);
+      this.barRenderSharedContext, this.darkMode);
   }
 
   private updateAxes() {
@@ -549,11 +612,6 @@ export class TbTimeSeriesChart {
       this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis', 'xAxis', 'grid'], lazyUpdate: true});
     }
-    changed = this.calculateYAxisInterval(this.yAxisList);
-    if (changed) {
-      this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
-      this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis'], lazyUpdate: true});
-    }
     if (this.yAxisList.length) {
       const extent = getAxisExtent(this.timeSeriesChart, this.yAxisList[0].id);
       const min = extent[0];
@@ -565,6 +623,49 @@ export class TbTimeSeriesChart {
         this.yMaxSubject.next(max);
       }
     }
+  }
+
+  private updateYAxisOffset(axisList: TimeSeriesChartYAxis[]): {offset: number; changed: boolean} {
+    const result = {offset: 0, changed: false};
+    let width = 0;
+    for (const yAxis of axisList) {
+      const newWidth = calculateYAxisWidth(this.timeSeriesChart, yAxis.id);
+      if (width && newWidth) {
+        result.offset += 5;
+      }
+      width = newWidth;
+      const showLine = !!width && yAxis.settings.showLine;
+      if (yAxis.option.axisLine.show !== showLine) {
+        yAxis.option.axisLine.show = showLine;
+        result.changed = true;
+      }
+      if (yAxis.option.offset !== result.offset) {
+        yAxis.option.offset = result.offset;
+        result.changed = true;
+      }
+      if (yAxis.settings.label) {
+        if (!width) {
+          if (yAxis.option.name) {
+            yAxis.option.name = null;
+            result.changed = true;
+          }
+        } else {
+          if (!yAxis.option.name) {
+            yAxis.option.name = yAxis.settings.label;
+            result.changed = true;
+          }
+          const nameGap = width;
+          if (yAxis.option.nameGap !== nameGap) {
+            yAxis.option.nameGap = nameGap;
+            result.changed = true;
+          }
+          const nameWidth = measureYAxisNameWidth(this.timeSeriesChart, yAxis.id, yAxis.settings.label);
+          result.offset += nameWidth;
+        }
+      }
+      result.offset += width;
+    }
+    return result;
   }
 
   private updateYAxisScale(axisList: TimeSeriesChartYAxis[]): boolean {
@@ -579,78 +680,17 @@ export class TbTimeSeriesChart {
     return changed;
   }
 
-  private updateYAxisOffset(axisList: TimeSeriesChartYAxis[]): {offset: number; changed: boolean} {
-    const result = {offset: 0, changed: false};
-    let width = 0;
-    for (const yAxis of axisList) {
-      const newWidth = calculateYAxisWidth(this.timeSeriesChart, yAxis.id);
-      if (width && newWidth) {
-        result.offset += 5;
-      }
-      width = newWidth;
-      const showLine = !!width && this.settings.yAxis.showLine;
-      if (yAxis.option.axisLine.show !== showLine) {
-        yAxis.option.axisLine.show = showLine;
-        result.changed = true;
-      }
-      if (yAxis.option.offset !== result.offset) {
-        yAxis.option.offset = result.offset;
-        result.changed = true;
-      }
-      if (this.settings.yAxis.label) {
-        if (!width) {
-          if (yAxis.option.name) {
-            yAxis.option.name = null;
-            result.changed = true;
-          }
-        } else {
-          if (!yAxis.option.name) {
-            yAxis.option.name = this.settings.yAxis.label;
-            result.changed = true;
-          }
-          const nameGap = width;
-          if (yAxis.option.nameGap !== nameGap) {
-            yAxis.option.nameGap = nameGap;
-            result.changed = true;
-          }
-          const nameWidth = measureYAxisNameWidth(this.timeSeriesChart, yAxis.id, this.settings.yAxis.label);
-          result.offset += nameWidth;
-        }
-      }
-      result.offset += width;
-    }
-    return result;
-  }
-
   private scaleYAxis(yAxis: TimeSeriesChartYAxis): boolean {
-    const yAxisIndex = this.yAxisList.indexOf(yAxis);
-    const axisBarDataItems = this.dataItems.filter(d => d.yAxisIndex === yAxisIndex && d.enabled &&
+    const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
       d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
     return !axisBarDataItems.length;
   }
 
-  private calculateYAxisInterval(axisList: TimeSeriesChartYAxis[]): boolean {
-    let changed = false;
-    for (const yAxis of axisList) {
-      if (yAxis.intervalCalculator) {
-        const axis = getYAxis(this.timeSeriesChart, yAxis.id);
-        if (axis) {
-          try {
-            const interval = yAxis.intervalCalculator(axis);
-            if ((yAxis.option as any).interval !== interval) {
-              (yAxis.option as any).interval = interval;
-              changed = true;
-            }
-          } catch (_e) {}
-        }
-      }
-    }
-    return changed;
-  }
-
   private minTopOffset(): number {
+    const showTickLabels =
+      !!this.yAxisList.find(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
     return (this.topPointLabels) ? 20 :
-      ((this.settings.yAxis.show && this.settings.yAxis.showTickLabels) ? 10 : 5);
+      (showTickLabels ? 10 : 5);
   }
 
   private minBottomOffset(): number {
@@ -667,10 +707,32 @@ export class TbTimeSeriesChart {
         const width = this.timeSeriesChart.getWidth();
         const height = this.timeSeriesChart.getHeight();
         if (width !== shapeWidth || height !== shapeHeight) {
+          let barItems: TimeSeriesChartDataItem[];
+          if (this.animationEnabled()) {
+            barItems =
+              this.dataItems.filter(d => d.enabled && d.data.length &&
+                d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
+            this.updateBarsAnimation(barItems, false);
+          }
           this.timeSeriesChart.resize();
+          if (this.animationEnabled()) {
+            this.updateBarsAnimation(barItems, true);
+          }
         }
       }
     }
   }
 
+  private animationEnabled(): boolean {
+    return this.settings.animation.animation;
+  }
+
+  private updateBarsAnimation(barItems: TimeSeriesChartDataItem[], animation: boolean) {
+    if (barItems.length) {
+      barItems.forEach(item => {
+        item.option.animation = animation;
+      });
+      this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
+    }
+  }
 }
