@@ -15,26 +15,16 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
 
-/**
- * 实体key定义
- */
-@ApiModel
+@Schema
 @Data
 public class EntityKey implements Serializable {
     private static final long serialVersionUID = -6421575477523085543L;
 
-    /**
-     * 实体key类型
-     */
     private final EntityKeyType type;
-
-    /**
-     * key描述
-     */
     private final String key;
 }

@@ -15,29 +15,20 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.ToString;
 
 import java.util.Collections;
 import java.util.List;
 
-/**
- * 实体数量查询
- */
-@ApiModel
+@Schema
 @ToString
 public class EntityCountQuery {
 
-    /**
-     * 实体过滤器
-     */
     @Getter
     private EntityFilter entityFilter;
 
-    /**
-     * key过滤器列表
-     */
     @Getter
     protected List<KeyFilter> keyFilters;
 

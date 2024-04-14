@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 /**
  * 字符串过滤器断言
