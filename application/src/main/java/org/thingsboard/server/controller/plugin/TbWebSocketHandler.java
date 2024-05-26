@@ -18,6 +18,7 @@ package org.thingsboard.server.controller.plugin;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
+import jakarta.annotation.PreDestroy;
 import jakarta.websocket.RemoteEndpoint;
 import jakarta.websocket.SendHandler;
 import jakarta.websocket.SendResult;
@@ -88,14 +89,7 @@ import static org.thingsboard.server.service.ws.DefaultWebSocketService.NUMBER_O
 @RequiredArgsConstructor
 public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocketMsgEndpoint {
 
-    /**
-     * 内部会话Map
-     */
     private final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
-
-    /**
-     * 外部会话Map
-     */
     private final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
 
     @Autowired @Lazy
@@ -146,6 +140,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
      * @param session ws会话
      * @param message 接收到的消息
      */
+    @PreDestroy
+    private void stop() {
+        internalSessionMap.clear();
+    }
+
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
@@ -166,7 +165,6 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         WebSocketSessionRef sessionRef = sessionMd.sessionRef;
         WsCommandsWrapper cmdsWrapper;
         try {
-            // 会话三种类型：通用、遥测、通知
             switch (sessionRef.getSessionType()) {
                 case GENERAL:
                     cmdsWrapper = JacksonUtil.fromString(msg, WsCommandsWrapper.class);
@@ -469,19 +467,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             }
         }
 
-        /**
-         * 接收消息并处理
-         * @param msg TextMessage消息的负载
-         * @throws IOException
-         */
         public void onMsg(String msg) throws IOException {
-            // 入站消息队列
             inboundMsgQueue.add(msg);
             tryProcessInboundMsgs();
         }
 
         void tryProcessInboundMsgs() throws IOException {
-            // 使用队列来进行消息处理
             while (!inboundMsgQueue.isEmpty()) {
                 if (inboundMsgQueueProcessorLock.tryLock()) {
                     try {
@@ -558,6 +549,18 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         } else {
             log.warn("[{}] Failed to find session by external id", externalId);
         }
+    }
+
+    @Override
+    public boolean isOpen(String externalId) {
+        String internalId = externalSessionMap.get(externalId);
+        if (internalId != null) {
+            SessionMetaData sessionMd = getSessionMd(internalId);
+            if (sessionMd != null) {
+                return sessionMd.session.isOpen();
+            }
+        }
+        return false;
     }
 
     private boolean checkLimits(WebSocketSession session, WebSocketSessionRef sessionRef) throws IOException {
